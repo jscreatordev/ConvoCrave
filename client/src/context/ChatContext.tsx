@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { chatSocket } from '@/lib/socket';
 import { useToast } from '@/hooks/use-toast';
-import { useLocation, useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 
 interface User {
   id: number;
@@ -134,11 +134,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Save user to localStorage for session persistence
     localStorage.setItem('currentUser', JSON.stringify(data.user));
     
-    toast({
-      title: "Connected!",
-      description: "Successfully connected to chat server",
-    });
-    
     // Default to general channel if available
     if (channels.length > 0) {
       const generalChannel = channels.find(c => c.name === 'general');
@@ -186,7 +181,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const handleDirectMessages = (data: any) => {
-    // Include all messages from the API response
     setDirectMessages(prev => ({
       ...prev,
       [data.userId]: data.messages
@@ -208,17 +202,29 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const handleNewDirectMessage = (data: any) => {
     const { message } = data;
-    const otherUserId = message.senderId === currentUser?.id ? message.receiverId : message.senderId;
     
-    if (!otherUserId) return;
+    // For direct messages, we need to determine which conversation this belongs to
+    let targetUserId: number;
     
-    // Add to existing messages for this user - store ALL messages
+    if (message.senderId === currentUser?.id) {
+      // This is a message FROM the current user TO someone else
+      targetUserId = message.receiverId!;
+    } else {
+      // This is a message TO the current user FROM someone else
+      targetUserId = message.senderId;
+    }
+    
+    // Add to existing messages for this conversation
     setDirectMessages(prev => {
-      const existing = prev[otherUserId] || [];
-      return {
-        ...prev,
-        [otherUserId]: [...existing, message]
-      };
+      const existing = prev[targetUserId] || [];
+      // Avoid duplicate messages
+      if (!existing.some(m => m.id === message.id)) {
+        return {
+          ...prev,
+          [targetUserId]: [...existing, message]
+        };
+      }
+      return prev;
     });
   };
 
@@ -229,6 +235,12 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return user;
     }));
+    
+    // Also add new users that might not be in our list yet
+    if (!prev.some(user => user.id === data.userId)) {
+      // Refresh the users list to get new users
+      chatSocket.send('refresh_users');
+    }
   };
 
   const handleNewChannel = (data: any) => {
@@ -271,6 +283,26 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       chatSocket.sendMessage(content, image, currentChannelId);
     } else if (currentDirectUserId) {
       chatSocket.sendMessage(content, image, undefined, currentDirectUserId);
+      
+      // Also manually add the message to our local state to ensure it shows immediately
+      const messageId = Date.now(); // temporary ID
+      const newMessage = {
+        id: messageId,
+        content,
+        image,
+        senderId: currentUser!.id,
+        receiverId: currentDirectUserId,
+        createdAt: new Date(),
+        sender: currentUser
+      };
+      
+      setDirectMessages(prev => {
+        const existing = prev[currentDirectUserId] || [];
+        return {
+          ...prev,
+          [currentDirectUserId]: [...existing, newMessage]
+        };
+      });
     }
   };
 
