@@ -100,18 +100,39 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
           
           {/* Channel list */}
           <div className="mt-2 space-y-1 custom-scrollbar max-h-40 overflow-y-auto">
-            {channels.map(channel => (
-              <div 
-                key={channel.id}
-                data-channel-id={channel.id}
-                className={`flex items-center px-2 py-1.5 rounded-md cursor-pointer hover:bg-muted ${
-                  currentChannelId === channel.id ? 'bg-primary/20' : ''
-                }`}
-                onClick={() => handleSelectChannel(channel.id)}
-              >
-                <span className="text-sm font-medium"># {channel.name}</span>
-              </div>
-            ))}
+            {channels.map(channel => {
+              const isUnread = unreadChannels.includes(channel.id);
+              return (
+                <div 
+                  key={channel.id}
+                  data-channel-id={channel.id}
+                  className={`flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer hover:bg-muted ${
+                    currentChannelId === channel.id ? 'bg-primary/20' : ''
+                  }`}
+                  onClick={() => handleSelectChannel(channel.id)}
+                >
+                  <div className="flex items-center">
+                    <span className="text-sm font-medium"># {channel.name}</span>
+                    {channel.isGroupChat && (
+                      <Users className="h-3 w-3 ml-1 text-muted-foreground" />
+                    )}
+                  </div>
+                  {isUnread && (
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="mt-2 space-y-1">
+            <button
+              className="w-full flex items-center justify-center mt-2 px-2 py-1.5 rounded-md border border-dashed border-muted-foreground/50 text-muted-foreground hover:text-primary hover:border-primary"
+              onClick={() => setIsCreateChannelModalOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              <span className="text-xs">New Channel</span>
+            </button>
           </div>
         </div>
 
@@ -119,12 +140,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
         <div className="px-4 py-2 mt-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Direct Messages</h2>
-            <button 
-              className="text-muted-foreground hover:text-primary text-xs"
-              onClick={() => setIsUserListModalOpen(true)}
-            >
-              <i className="ri-add-line text-lg"></i>
-            </button>
+            <div className="flex space-x-1">
+              <button 
+                className="text-muted-foreground hover:text-primary text-xs p-1 rounded hover:bg-muted"
+                onClick={() => setIsCreateGroupChatModalOpen(true)}
+                title="Create Group Chat"
+              >
+                <Users className="h-4 w-4" />
+              </button>
+              <button 
+                className="text-muted-foreground hover:text-primary text-xs p-1 rounded hover:bg-muted"
+                onClick={() => setIsUserListModalOpen(true)}
+                title="Direct Message"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
           </div>
           
           {/* DM list */}
@@ -165,6 +196,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
         isOpen={isUserListModalOpen} 
         onClose={() => setIsUserListModalOpen(false)} 
         onSelectUser={handleSelectUser}
+      />
+      
+      <CreateGroupChatModal
+        isOpen={isCreateGroupChatModalOpen}
+        onClose={() => setIsCreateGroupChatModalOpen(false)}
       />
     </>
   );
