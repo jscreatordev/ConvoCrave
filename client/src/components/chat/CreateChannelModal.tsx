@@ -52,9 +52,9 @@ const CreateChannelModal: React.FC<CreateChannelModalProps> = ({ isOpen, onClose
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg w-full max-w-md p-6 shadow-xl">
+      <div className="bg-white rounded-lg w-full max-w-md p-6 shadow-xl text-black">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Create Channel</h3>
+          <h3 className="text-lg font-semibold text-black">Create Channel</h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <i className="ri-close-line text-xl"></i>
           </button>
@@ -68,7 +68,7 @@ const CreateChannelModal: React.FC<CreateChannelModalProps> = ({ isOpen, onClose
         
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="channelName" className="block text-sm font-medium text-gray-700 mb-1">Channel Name</label>
+            <label htmlFor="channelName" className="block text-sm font-medium text-gray-700 mb-1 text-black">Channel Name</label>
             <div className="flex">
               <span className="inline-flex items-center px-3 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 rounded-l-md">
                 #
@@ -78,7 +78,7 @@ const CreateChannelModal: React.FC<CreateChannelModalProps> = ({ isOpen, onClose
                 id="channelName" 
                 value={channelName}
                 onChange={(e) => setChannelName(e.target.value.toLowerCase())}
-                className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 border p-2 focus:border-primary focus:ring-primary sm:text-sm"
+                className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 border p-2 focus:border-primary focus:ring-primary sm:text-sm text-black"
                 placeholder="e.g. design-team" 
                 required
               />
@@ -86,13 +86,13 @@ const CreateChannelModal: React.FC<CreateChannelModalProps> = ({ isOpen, onClose
           </div>
           
           <div className="mb-4">
-            <label htmlFor="channelDescription" className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+            <label htmlFor="channelDescription" className="block text-sm font-medium text-gray-700 mb-1 text-black">Description (optional)</label>
             <input 
               type="text" 
               id="channelDescription" 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="block w-full rounded-md border-gray-300 border p-2 focus:border-primary focus:ring-primary sm:text-sm"
+              className="block w-full rounded-md border-gray-300 border p-2 focus:border-primary focus:ring-primary sm:text-sm text-black"
               placeholder="What's this channel about?"
             />
           </div>
