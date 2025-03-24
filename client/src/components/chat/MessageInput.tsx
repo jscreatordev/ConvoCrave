@@ -76,16 +76,16 @@ const MessageInput: React.FC = () => {
       : '';
 
   return (
-    <div className="border-t border-gray-200 p-4 bg-white">
+    <div className="border-t border-gray-800 p-4 bg-background">
       <div className="flex items-center">
         <div className="relative flex-1">
-          <div className="border border-gray-300 rounded-lg p-3 bg-white flex items-end space-x-2">
+          <div className="border border-gray-700 rounded-lg p-3 bg-muted flex items-end space-x-2">
             {/* Text input area */}
             <div className="flex-1">
               <div 
                 id="messageInput" 
                 ref={messageInputRef}
-                className="outline-none w-full min-h-[60px] max-h-32 overflow-auto custom-scrollbar" 
+                className="outline-none w-full min-h-[60px] max-h-32 overflow-auto custom-scrollbar text-foreground" 
                 contentEditable={isActive}
                 placeholder={isActive ? `Message ${targetName}` : 'Select a channel or user to start messaging'}
                 onKeyDown={handleKeyDown}
@@ -98,7 +98,7 @@ const MessageInput: React.FC = () => {
                   <img 
                     src={imagePreview} 
                     alt="Image preview" 
-                    className="max-h-[200px] object-contain rounded-md border border-gray-300" 
+                    className="max-h-[200px] object-contain rounded-md border border-gray-700" 
                   />
                   <button 
                     onClick={handleRemoveImage}
@@ -115,7 +115,7 @@ const MessageInput: React.FC = () => {
               {/* Image upload button */}
               <button 
                 onClick={() => imageInputRef.current?.click()} 
-                className="text-gray-500 hover:text-primary p-2 rounded-full" 
+                className="text-muted-foreground hover:text-primary p-2 rounded-full" 
                 title="Upload image"
                 disabled={!isActive}
               >
@@ -132,7 +132,7 @@ const MessageInput: React.FC = () => {
               {/* Send button */}
               <button 
                 onClick={handleSendMessage}
-                className="bg-primary text-white p-2 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-primary text-primary-foreground p-2 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!isActive || (!message.trim() && !imagePreview)}
               >
                 <i className="ri-send-plane-fill text-xl"></i>

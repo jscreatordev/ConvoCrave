@@ -30,16 +30,16 @@ const ChatHeader: React.FC = () => {
   };
 
   return (
-    <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4 md:px-6 bg-white z-10">
+    <div className="h-16 border-b border-gray-800 flex items-center justify-between px-4 md:px-6 bg-background z-10">
       <div className="flex items-center">
-        <h2 className="text-lg font-semibold">{getCurrentName()}</h2>
-        <span className="ml-2 text-gray-500 text-sm hidden md:inline">{getMembers()}</span>
+        <h2 className="text-lg font-semibold text-foreground">{getCurrentName()}</h2>
+        <span className="ml-2 text-muted-foreground text-sm hidden md:inline">{getMembers()}</span>
       </div>
       <div className="flex items-center space-x-2">
-        <button className="p-2 text-gray-500 hover:text-primary rounded-full">
+        <button className="p-2 text-muted-foreground hover:text-primary rounded-full">
           <i className="ri-user-add-line"></i>
         </button>
-        <button className="p-2 text-gray-500 hover:text-primary rounded-full">
+        <button className="p-2 text-muted-foreground hover:text-primary rounded-full">
           <i className="ri-information-line"></i>
         </button>
       </div>

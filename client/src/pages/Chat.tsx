@@ -19,11 +19,11 @@ const Chat: React.FC = () => {
   }, [isAuthenticated, navigate]);
 
   if (!isAuthenticated) {
-    return <div className="h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="h-screen flex items-center justify-center bg-background text-foreground">Loading...</div>;
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-white">
+    <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* Sidebar */}
       <Sidebar 
         isMobileOpen={isMobileSidebarOpen} 
@@ -33,7 +33,7 @@ const Chat: React.FC = () => {
       {/* Mobile sidebar toggle */}
       <div className="md:hidden absolute top-4 left-4 z-20">
         <button 
-          className="p-2 rounded-md bg-dark text-white"
+          className="p-2 rounded-md bg-primary text-primary-foreground"
           onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         >
           <i className="ri-menu-line text-xl"></i>

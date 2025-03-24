@@ -22,7 +22,10 @@ const MessageList: React.FC = () => {
   const currentMessages = currentChannelId 
     ? (channelMessages[currentChannelId] || [])
     : currentDirectUserId 
-      ? (directMessages[currentDirectUserId] || [])
+      ? (directMessages[currentDirectUserId] || []).filter(
+          // In DMs, don't show messages from the current user
+          m => currentDirectUserId && m.receiverId === currentUser?.id
+        )
       : [];
 
   const currentName = currentChannelId 
@@ -52,8 +55,8 @@ const MessageList: React.FC = () => {
 
   if (!currentChannelId && !currentDirectUserId) {
     return (
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar flex items-center justify-center">
-        <div className="text-center text-gray-500">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar flex items-center justify-center bg-background">
+        <div className="text-center text-muted-foreground">
           <p>Select a channel or direct message to start chatting</p>
         </div>
       </div>
@@ -62,11 +65,11 @@ const MessageList: React.FC = () => {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar" id="messageContainer">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar bg-background" id="messageContainer">
         <div className="space-y-4">
           {/* System message */}
           <div className="flex justify-center my-4">
-            <div className="px-4 py-2 bg-gray-100 rounded-full text-sm text-gray-500">
+            <div className="px-4 py-2 bg-muted rounded-full text-sm text-muted-foreground">
               {currentChannelId
                 ? `This is the start of the #${currentName} channel`
                 : `This is the start of your conversation with ${currentName}`}
@@ -86,15 +89,15 @@ const MessageList: React.FC = () => {
                 />
                 <div className="flex-1">
                   <div className="flex items-center">
-                    <span className="font-medium">
+                    <span className="font-medium text-foreground">
                       {message.sender?.displayName || message.sender?.username}
                     </span>
-                    <span className="text-xs text-gray-400 ml-2">
+                    <span className="text-xs text-muted-foreground ml-2">
                       {message.createdAt ? formatMessageTime(message.createdAt) : ''}
                     </span>
                   </div>
                   {message.content && (
-                    <div className="mt-1 text-gray-800">
+                    <div className="mt-1 text-foreground">
                       {message.content}
                     </div>
                   )}
@@ -103,7 +106,7 @@ const MessageList: React.FC = () => {
                       <img 
                         src={message.image} 
                         alt="Uploaded image" 
-                        className="rounded-lg border border-gray-200 max-w-sm max-h-60 object-cover cursor-pointer"
+                        className="rounded-lg border border-border max-w-sm max-h-60 object-cover cursor-pointer"
                         onClick={() => handleImageClick(message.image!)}
                       />
                     </div>
