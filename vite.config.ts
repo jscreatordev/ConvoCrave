@@ -28,9 +28,9 @@ export default defineConfig({
       "@shared": path.resolve(__dirname, "shared"),
     },
   },
-  root: path.resolve(__dirname, "client"),
+  root: path.resolve(__dirname, "client"), // Ensure Vite looks inside "client"
   build: {
-    outDir: path.resolve(__dirname, "dist"), // Set output directory to "dist"
+    outDir: path.resolve(__dirname, "../dist"), // Puts dist at the project root for Vercel
     emptyOutDir: true,
   },
 });
