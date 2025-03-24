@@ -55,37 +55,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         switch (data.type) {
           case 'auth':
-            const username = data.username;
-            // Check if username is already connected
-            const existingClient = clients.find(client => {
-              const user = await storage.getUserById(client.userId);
-              return user && user.username === username;
-            });
+            // Authenticate user
+            const user = await storage.getUser(data.userId);
+            if (user) {
+              userId = user.id;
+              // Add to connected clients
+              clients.push({ socket: ws, userId: user.id });
 
-            if (existingClient) {
-              ws.send(JSON.stringify({
-                type: 'error',
-                message: 'Username already in use'
-              }));
-              return;
-            }
-
-            // Get or create user
-            let user = await storage.getUserByUsername(username);
-            if (!user) {
-              // Create new user
-              user = await storage.createUser({
-                username,
-                displayName: username,
-                avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
-              });
-            }
-
-            userId = user.id;
-            clients.push({ socket: ws, userId: user.id });
-
-            // Update user status
-            await storage.updateUserStatus(user.id, 'online');
+              // Update user status
+              await storage.updateUserStatus(user.id, 'online');
 
               // Send user data back
               ws.send(JSON.stringify({
