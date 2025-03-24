@@ -98,6 +98,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }));
             }
             break;
+            
+          case 'get_users':
+            // Handle requests to refresh the user list
+            if (!userId) {
+              ws.send(JSON.stringify({
+                type: 'error',
+                message: 'Not authenticated'
+              }));
+              return;
+            }
+            
+            try {
+              const allUsers = await storage.getAllUsers();
+              ws.send(JSON.stringify({
+                type: 'users_list',
+                users: allUsers
+              }));
+            } catch (err) {
+              console.error('Error fetching users:', err);
+              ws.send(JSON.stringify({
+                type: 'error',
+                message: 'Failed to fetch users'
+              }));
+            }
+            break;
 
           case 'message':
             if (!userId) {

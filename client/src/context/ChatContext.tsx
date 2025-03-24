@@ -229,18 +229,23 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const handleUserStatus = (data: any) => {
-    setUsers(prev => prev.map(user => {
-      if (user.id === data.userId) {
-        return { ...user, status: data.status };
+    setUsers(prev => {
+      // Check if this user already exists in our list
+      const userExists = prev.some(user => user.id === data.userId);
+      
+      // If user doesn't exist, request a user list refresh
+      if (!userExists) {
+        chatSocket.send('get_users', {});
       }
-      return user;
-    }));
-    
-    // Also add new users that might not be in our list yet
-    if (!prev.some(user => user.id === data.userId)) {
-      // Refresh the users list to get new users
-      chatSocket.send('refresh_users');
-    }
+      
+      // Update status for existing users
+      return prev.map(user => {
+        if (user.id === data.userId) {
+          return { ...user, status: data.status };
+        }
+        return user;
+      });
+    });
   };
 
   const handleNewChannel = (data: any) => {

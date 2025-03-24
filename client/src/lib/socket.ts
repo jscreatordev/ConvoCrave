@@ -96,7 +96,9 @@ class ChatSocket {
       return;
     }
 
-    this.socket.send(JSON.stringify({ type, ...data }));
+    const message = { type, ...data };
+    console.log("Sending message:", message);
+    this.socket.send(JSON.stringify(message));
   }
 
   on(event: string, handler: MessageHandler) {
