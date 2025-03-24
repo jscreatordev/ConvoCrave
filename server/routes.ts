@@ -54,43 +54,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const data = JSON.parse(message.toString());
         
         switch (data.type) {
-          case 'create_group_chat':
-            if (!userId) {
-              ws.send(JSON.stringify({
-                type: 'error',
-                message: 'Not authenticated'
-              }));
-              return;
-            }
-
-            try {
-              const channel = await storage.createGroupChat(
-                data.name,
-                data.description,
-                userId,
-                data.memberIds
-              );
-
-              // Broadcast new channel to all involved users
-              data.memberIds.forEach(memberId => {
-                sendTo(memberId, {
-                  type: 'new_channel',
-                  channel
-                });
-              });
-
-              ws.send(JSON.stringify({
-                type: 'channel_created',
-                channel
-              }));
-            } catch (err) {
-              console.error('Group chat creation error:', err);
-              ws.send(JSON.stringify({
-                type: 'error',
-                message: 'Failed to create group chat'
-              }));
-            }
-            break;
           case 'auth':
             // Authenticate user
             const user = await storage.getUser(data.userId);
