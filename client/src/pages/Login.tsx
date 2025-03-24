@@ -7,7 +7,6 @@ const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,8 +28,8 @@ const Login: React.FC = () => {
       return;
     }
 
-    if (isRegistering && !displayName.trim()) {
-      setError('Display name is required for registration');
+    if (!displayName.trim()) {
+      setError('Display name is required');
       return;
     }
 
@@ -38,12 +37,10 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
-      const data = isRegistering 
-        ? { username, displayName } 
-        : { username };
-
-      const response = await apiRequest('POST', endpoint, data);
+      const response = await apiRequest('POST', '/api/auth/register', { 
+        username, 
+        displayName 
+      });
       const userData = await response.json();
 
       // Login with socket
@@ -128,28 +125,7 @@ const Login: React.FC = () => {
             </div>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-card text-muted-foreground">
-                  {isRegistering ? 'Already have an account?' : 'New to ConvoCrave?'}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={() => setIsRegistering(!isRegistering)}
-                className="w-full inline-flex justify-center py-2 px-4 border border-border rounded-md shadow-sm bg-secondary text-sm font-medium text-secondary-foreground hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-              >
-                {isRegistering ? 'Sign in instead' : 'Create new account'}
-              </button>
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>
