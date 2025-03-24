@@ -55,7 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
       <div id="sidebar" className={sidebarClasses}>
         {/* App header */}
         <div className="px-4 h-16 flex items-center justify-between border-b border-gray-800">
-          <h1 className="text-xl font-semibold text-primary">ChatSync</h1>
+          <h1 className="text-xl font-semibold text-primary">ConvoCrave</h1>
           {/* User menu trigger */}
           <div id="userMenuTrigger" className="relative cursor-pointer" onClick={logout}>
             <i className="ri-more-2-fill text-muted-foreground hover:text-primary text-xl"></i>

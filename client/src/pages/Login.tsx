@@ -151,7 +151,7 @@ const Login: React.FC = () => {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-card text-muted-foreground">
-                  {isRegistering ? 'Already have an account?' : 'New to ChatSync?'}
+                  {isRegistering ? 'Already have an account?' : 'New to ConvoCrave?'}
                 </span>
               </div>
             </div>
