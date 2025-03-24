@@ -17,6 +17,8 @@ interface Channel {
   name: string;
   description?: string;
   createdById: number;
+  isGroupChat?: boolean;
+  isPrivate?: boolean;
 }
 
 interface Message {
@@ -42,6 +44,9 @@ interface ChatContextType {
   setCurrentDirectUserId: (id: number | null) => void;
   sendMessage: (content: string, image?: string) => void;
   createChannel: (name: string, description: string) => void;
+  createGroupChat: (name: string, description: string, memberIds: number[]) => void;
+  joinChannel: (channelId: number) => void;
+  unreadChannels: number[];
   isAuthenticated: boolean;
   login: (userId: number) => void;
   logout: () => void;
@@ -57,6 +62,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [directMessages, setDirectMessages] = useState<Record<number, Message[]>>({});
   const [currentChannelId, setCurrentChannelId] = useState<number | null>(null);
   const [currentDirectUserId, setCurrentDirectUserId] = useState<number | null>(null);
+  const [unreadChannels, setUnreadChannels] = useState<number[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   
   const { toast } = useToast();
@@ -90,6 +96,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     chatSocket.on('direct_message', handleNewDirectMessage);
     chatSocket.on('user_status', handleUserStatus);
     chatSocket.on('new_channel', handleNewChannel);
+    chatSocket.on('unread_channels', handleUnreadChannels);
+    chatSocket.on('group_chat_created', handleNewChannel);
     chatSocket.on('error', handleError);
     chatSocket.on('disconnect', handleDisconnect);
     
@@ -105,6 +113,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       chatSocket.off('direct_message');
       chatSocket.off('user_status');
       chatSocket.off('new_channel');
+      chatSocket.off('unread_channels');
+      chatSocket.off('group_chat_created');
       chatSocket.off('error');
       chatSocket.off('disconnect');
     };
@@ -251,6 +261,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const handleNewChannel = (data: any) => {
     setChannels(prev => [...prev, data.channel]);
   };
+  
+  const handleUnreadChannels = (data: any) => {
+    setUnreadChannels(data.channelIds || []);
+  };
 
   const handleError = (data: any) => {
     toast({
@@ -316,6 +330,46 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     chatSocket.createChannel(name, description);
   };
+  
+  const createGroupChat = (name: string, description: string, memberIds: number[]) => {
+    if (!isAuthenticated) return;
+    
+    chatSocket.send('create_group_chat', {
+      name,
+      description,
+      memberIds
+    });
+    
+    toast({
+      title: "Group Chat Created",
+      description: `Created new group chat "${name}" with ${memberIds.length} members`,
+    });
+  };
+  
+  const joinChannel = (channelId: number) => {
+    if (!isAuthenticated) return;
+    
+    chatSocket.joinChannel(channelId);
+    
+    // Set this as the current channel after joining
+    setCurrentChannelId(channelId);
+  };
+  
+  // When current channel changes, mark messages as read
+  useEffect(() => {
+    if (currentChannelId && channelMessages[currentChannelId]?.length > 0) {
+      const lastMessage = channelMessages[currentChannelId][channelMessages[currentChannelId].length - 1];
+      
+      // Mark channel as read by sending update to server
+      chatSocket.send('mark_channel_read', {
+        channelId: currentChannelId,
+        messageId: lastMessage.id
+      });
+      
+      // Remove this channel from unread list locally
+      setUnreadChannels(prev => prev.filter(id => id !== currentChannelId));
+    }
+  }, [currentChannelId, channelMessages]);
 
   return (
     <ChatContext.Provider
@@ -327,10 +381,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         directMessages,
         currentChannelId,
         currentDirectUserId,
+        unreadChannels,
         setCurrentChannelId,
         setCurrentDirectUserId,
         sendMessage,
         createChannel,
+        createGroupChat,
+        joinChannel,
         isAuthenticated,
         login,
         logout

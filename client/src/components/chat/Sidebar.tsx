@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useChat } from '@/context/ChatContext';
 import CreateChannelModal from './CreateChannelModal';
+import CreateGroupChatModal from './CreateGroupChatModal';
 import UserListModal from './UserListModal';
+import { Plus, Users, LogOut } from 'lucide-react';
 
 interface SidebarProps {
   isMobileOpen: boolean;
@@ -15,12 +17,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
     users, 
     currentChannelId, 
     currentDirectUserId,
+    unreadChannels,
     setCurrentChannelId, 
     setCurrentDirectUserId,
+    joinChannel,
     logout
   } = useChat();
 
   const [isCreateChannelModalOpen, setIsCreateChannelModalOpen] = useState(false);
+  const [isCreateGroupChatModalOpen, setIsCreateGroupChatModalOpen] = useState(false);
   const [isUserListModalOpen, setIsUserListModalOpen] = useState(false);
 
   const handleSelectChannel = (channelId: number) => {
