@@ -264,7 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             break;
 
-          case 'create_channel':
+          case 'create_group_chat':
             if (!userId) {
               ws.send(JSON.stringify({
                 type: 'error',
@@ -274,32 +274,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
 
             try {
-              const channelData = insertChannelSchema.parse({
-                name: data.name,
-                description: data.description,
-                createdById: userId
-              });
-
-              // Check if channel exists
-              const existingChannel = await storage.getChannelByName(data.name);
-              if (existingChannel) {
-                ws.send(JSON.stringify({
-                  type: 'error',
-                  message: 'Channel name already exists'
-                }));
-                return;
-              }
-
-              const channel = await storage.createChannel(channelData);
+              const { name, description, memberIds } = data;
               
-              // Add creator to channel
-              await storage.addUserToChannel({
-                channelId: channel.id,
-                userId
+              const channel = await storage.createGroupChat(
+                name,
+                description,
+                userId,
+                memberIds
+              );
+
+              // Notify all members about the new group chat
+              memberIds.forEach(memberId => {
+                sendTo(memberId, {
+                  type: 'new_channel',
+                  channel
+                });
               });
 
-              // Broadcast new channel to all clients
-              broadcast({
+              // Also notify the creator
+              sendTo(userId, {
                 type: 'new_channel',
                 channel
               });
