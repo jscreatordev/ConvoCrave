@@ -10,7 +10,7 @@ const Login: React.FC = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { isAuthenticated, login } = useChat();
   const [location, navigate] = useLocation();
 
@@ -23,32 +23,32 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!username.trim() || !password.trim()) {
-      setError('Username and password are required');
+
+    if (!username.trim()) {
+      setError('Username is required');
       return;
     }
-    
+
     if (isRegistering && !displayName.trim()) {
       setError('Display name is required for registration');
       return;
     }
-    
+
     setIsLoading(true);
     setError('');
-    
+
     try {
       const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
       const data = isRegistering 
-        ? { username, password, displayName } 
-        : { username, password };
-      
+        ? { username, displayName } 
+        : { username };
+
       const response = await apiRequest('POST', endpoint, data);
       const userData = await response.json();
-      
+
       // Login with socket
       login(userData.id);
-      
+
       // Navigate to chat
       navigate('/');
     } catch (err) {
@@ -74,7 +74,7 @@ const Login: React.FC = () => {
               {error}
             </div>
           )}
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-foreground">
@@ -112,22 +112,6 @@ const Login: React.FC = () => {
               </div>
             )}
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground">
-                Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm bg-input text-foreground placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                />
-              </div>
-            </div>
 
             <div>
               <button
