@@ -18,16 +18,22 @@ export interface IStorage {
   getChannelByName(name: string): Promise<Channel | undefined>;
   createChannel(channel: InsertChannel): Promise<Channel>;
   getAllChannels(): Promise<Channel[]>;
+  getPublicChannels(): Promise<Channel[]>;
   
   // Message operations
   createMessage(message: InsertMessage): Promise<Message>;
   getChannelMessages(channelId: number): Promise<Message[]>;
   getDirectMessages(user1Id: number, user2Id: number): Promise<Message[]>;
+  getLastMessageInChannel(channelId: number): Promise<Message | undefined>;
   
   // Channel membership operations
   addUserToChannel(membership: InsertChannelMember): Promise<ChannelMember>;
   getChannelMembers(channelId: number): Promise<number[]>;
   getChannelsForUser(userId: number): Promise<Channel[]>;
+  updateLastReadMessage(userId: number, channelId: number, messageId: number): Promise<void>;
+  getLastReadMessageId(userId: number, channelId: number): Promise<number | null>;
+  getUnreadChannels(userId: number): Promise<number[]>;
+  createGroupChat(name: string, description: string, createdById: number, memberIds: number[]): Promise<Channel>;
 }
 
 export class MemStorage implements IStorage {
@@ -67,7 +73,9 @@ export class MemStorage implements IStorage {
     const generalChannel: InsertChannel = {
       name: "general",
       description: "General discussion channel",
-      createdById: admin.id
+      createdById: admin.id,
+      isGroupChat: false,
+      isPrivate: false
     };
     const channel = this.createChannel(generalChannel);
 
@@ -189,6 +197,93 @@ export class MemStorage implements IStorage {
       .map((membership) => membership.channelId);
     
     return channelIds.map(id => this.channels.get(id)!).filter(Boolean);
+  }
+
+  async getPublicChannels(): Promise<Channel[]> {
+    return Array.from(this.channels.values())
+      .filter(channel => !channel.isPrivate);
+  }
+
+  async getLastMessageInChannel(channelId: number): Promise<Message | undefined> {
+    const messages = await this.getChannelMessages(channelId);
+    if (messages.length === 0) return undefined;
+    
+    // Sort by creation date, newest first
+    messages.sort((a, b) => {
+      if (!a.createdAt || !b.createdAt) return 0;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
+    
+    return messages[0];
+  }
+
+  async updateLastReadMessage(userId: number, channelId: number, messageId: number): Promise<void> {
+    // Find the channel membership
+    const membership = Array.from(this.channelMembers.values())
+      .find(m => m.channelId === channelId && m.userId === userId);
+    
+    if (membership) {
+      // Update the last read message ID
+      membership.lastReadMessageId = messageId;
+      this.channelMembers.set(membership.id, membership);
+    }
+  }
+
+  async getLastReadMessageId(userId: number, channelId: number): Promise<number | null> {
+    const membership = Array.from(this.channelMembers.values())
+      .find(m => m.channelId === channelId && m.userId === userId);
+    
+    return membership?.lastReadMessageId || null;
+  }
+
+  async getUnreadChannels(userId: number): Promise<number[]> {
+    const userChannels = await this.getChannelsForUser(userId);
+    const unreadChannelIds: number[] = [];
+    
+    for (const channel of userChannels) {
+      const lastMessage = await this.getLastMessageInChannel(channel.id);
+      if (!lastMessage) continue;
+      
+      const lastReadId = await this.getLastReadMessageId(userId, channel.id);
+      
+      // If user hasn't read the last message, mark channel as unread
+      if (!lastReadId || lastReadId < lastMessage.id) {
+        unreadChannelIds.push(channel.id);
+      }
+    }
+    
+    return unreadChannelIds;
+  }
+
+  async createGroupChat(
+    name: string, 
+    description: string, 
+    createdById: number, 
+    memberIds: number[]
+  ): Promise<Channel> {
+    // Create the channel with group chat flag
+    const channel = await this.createChannel({
+      name,
+      description,
+      createdById,
+      isGroupChat: true,
+      isPrivate: true
+    });
+    
+    // Add creator to the channel (if not already in memberIds)
+    if (!memberIds.includes(createdById)) {
+      memberIds.push(createdById);
+    }
+    
+    // Add all members to the channel
+    for (const memberId of memberIds) {
+      await this.addUserToChannel({
+        channelId: channel.id,
+        userId: memberId
+      });
+    }
+    
+    return channel;
   }
 }
 
