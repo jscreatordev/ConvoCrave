@@ -21,7 +21,7 @@ interface ConnectedClient {
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-  
+
   // Store connected clients with their user IDs
   const clients: ConnectedClient[] = [];
 
@@ -52,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('message', async (message) => {
       try {
         const data = JSON.parse(message.toString());
-        
+
         switch (data.type) {
           case 'auth':
             // Authenticate user
@@ -61,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId = user.id;
               // Add to connected clients
               clients.push({ socket: ws, userId: user.id });
-              
+
               // Update user status
               await storage.updateUserStatus(user.id, 'online');
 
@@ -98,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }));
             }
             break;
-            
+
           case 'get_users':
             // Handle requests to refresh the user list
             if (!userId) {
@@ -108,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }));
               return;
             }
-            
+
             try {
               const allUsers = await storage.getAllUsers();
               ws.send(JSON.stringify({
@@ -143,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
 
               const message = await storage.createMessage(messageData);
-              
+
               // Get sender info to include in response
               const sender = await storage.getUser(userId);
 
@@ -165,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   type: 'direct_message',
                   message: fullMessage
                 });
-                
+
                 // Send back to sender too if not already included
                 sendTo(userId, {
                   type: 'direct_message',
@@ -196,12 +196,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               const channelId = data.channelId;
               const messages = await storage.getChannelMessages(channelId);
-              
+
               // Get all user details for messages
               const userIds = new Set(messages.map(m => m.senderId));
               const usersList = await Promise.all(Array.from(userIds).map(id => storage.getUser(id)));
               const usersMap = Object.fromEntries(usersList.filter(Boolean).map(u => [u!.id, u]));
-              
+
               // Include sender info
               const messagesWithSenders = messages.map(msg => ({
                 ...msg,
@@ -234,16 +234,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               const otherUserId = data.userId;
               const messages = await storage.getDirectMessages(userId, otherUserId);
-              
+
               // Get both user details
               const user1 = await storage.getUser(userId);
               const user2 = await storage.getUser(otherUserId);
-              
+
               // Create a map for quick lookup
               const usersMap: Record<number, any> = {};
               if (user1) usersMap[user1.id] = user1;
               if (user2) usersMap[user2.id] = user2;
-              
+
               // Include sender info
               const messagesWithSenders = messages.map(msg => ({
                 ...msg,
@@ -275,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             try {
               const { name, description, memberIds } = data;
-              
+
               const channel = await storage.createGroupChat(
                 name,
                 description,
@@ -291,12 +291,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 });
               });
 
-              // Also notify the creator
-              sendTo(userId, {
+              ws.send(JSON.stringify({
+                type: 'channel_created',
+                channel
+              }));
+            } catch (err) {
+              console.error('Channel creation error:', err);
+              if (err instanceof ZodError) {
+                ws.send(JSON.stringify({
+                  type: 'error',
+                  message: 'Invalid channel data',
+                  errors: err.errors
+                }));
+              } else {
+                ws.send(JSON.stringify({
+                  type: 'error',
+                  message: 'Failed to create channel'
+                }));
+              }
+            }
+            break;
+
+          case 'create_channel':
+            if (!userId) {
+              ws.send(JSON.stringify({
+                type: 'error',
+                message: 'Not authenticated'
+              }));
+              return;
+            }
+
+            try {
+              const channelData = insertChannelSchema.parse({
+                name: data.name,
+                description: data.description,
+                createdById: userId,
+                isGroupChat: false,
+                isPrivate: false
+              });
+
+              // Check if channel exists
+              const existingChannel = await storage.getChannelByName(data.name);
+              if (existingChannel) {
+                ws.send(JSON.stringify({
+                  type: 'error',
+                  message: 'Channel name already exists'
+                }));
+                return;
+              }
+
+              const channel = await storage.createChannel(channelData);
+
+              // Add creator to channel
+              await storage.addUserToChannel({
+                channelId: channel.id,
+                userId
+              });
+
+              // Broadcast new channel to all clients
+              broadcast({
                 type: 'new_channel',
                 channel
               });
 
+              // Send success response to creator
               ws.send(JSON.stringify({
                 type: 'channel_created',
                 channel
@@ -330,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               const channelId = data.channelId;
               const channel = await storage.getChannel(channelId);
-              
+
               if (!channel) {
                 ws.send(JSON.stringify({
                   type: 'error',
@@ -389,7 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId) {
         // Update user status
         await storage.updateUserStatus(userId, 'offline');
-        
+
         // Remove from connected clients
         const index = clients.findIndex(client => client.userId === userId);
         if (index !== -1) {
@@ -411,11 +469,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const data = loginSchema.parse(req.body);
       const user = await storage.getUserByUsername(data.username);
-      
+
       if (!user || user.password !== data.password) {
         return res.status(401).json({ message: 'Invalid username or password' });
       }
-      
+
       return res.status(200).json({ 
         id: user.id,
         username: user.username,
@@ -435,15 +493,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/register', async (req, res) => {
     try {
       const data = insertUserSchema.parse(req.body);
-      
+
       // Check if username exists
       const existingUser = await storage.getUserByUsername(data.username);
       if (existingUser) {
         return res.status(400).json({ message: 'Username already exists' });
       }
-      
+
       const user = await storage.createUser(data);
-      
+
       // Add user to general channel
       const generalChannel = await storage.getChannelByName('general');
       if (generalChannel) {
@@ -452,7 +510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: user.id
         });
       }
-      
+
       return res.status(201).json({ 
         id: user.id,
         username: user.username,
