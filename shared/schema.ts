@@ -28,12 +28,16 @@ export const channels = pgTable("channels", {
   name: text("name").notNull().unique(),
   description: text("description"),
   createdById: integer("created_by_id").notNull(),
+  isGroupChat: boolean("is_group_chat").default(false),
+  isPrivate: boolean("is_private").default(false),
 });
 
 export const insertChannelSchema = createInsertSchema(channels).pick({
   name: true,
   description: true,
   createdById: true,
+  isGroupChat: true,
+  isPrivate: true,
 });
 
 export type InsertChannel = z.infer<typeof insertChannelSchema>;
@@ -66,11 +70,13 @@ export const channelMembers = pgTable("channel_members", {
   id: serial("id").primaryKey(),
   channelId: integer("channel_id").notNull(),
   userId: integer("user_id").notNull(),
+  lastReadMessageId: integer("last_read_message_id"),
 });
 
 export const insertChannelMemberSchema = createInsertSchema(channelMembers).pick({
   channelId: true,
   userId: true,
+  lastReadMessageId: true,
 });
 
 export type InsertChannelMember = z.infer<typeof insertChannelMemberSchema>;
