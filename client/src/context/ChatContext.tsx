@@ -186,6 +186,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const handleDirectMessages = (data: any) => {
+    // Include all messages from the API response
     setDirectMessages(prev => ({
       ...prev,
       [data.userId]: data.messages
@@ -203,15 +204,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         [channelId]: [...existing, message]
       };
     });
-    
-    // Show notification if not in the current channel
-    if (currentChannelId !== channelId && message.senderId !== currentUser?.id) {
-      const channel = channels.find(c => c.id === channelId);
-      toast({
-        title: `New message in #${channel?.name || 'channel'}`,
-        description: message.content?.substring(0, 50) || 'New message',
-      });
-    }
   };
 
   const handleNewDirectMessage = (data: any) => {
@@ -220,7 +212,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     if (!otherUserId) return;
     
-    // Add to existing messages for this user
+    // Add to existing messages for this user - store ALL messages
     setDirectMessages(prev => {
       const existing = prev[otherUserId] || [];
       return {
@@ -228,15 +220,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         [otherUserId]: [...existing, message]
       };
     });
-    
-    // Show notification if not in the current direct message thread
-    if (currentDirectUserId !== otherUserId && message.senderId !== currentUser?.id) {
-      const user = users.find(u => u.id === message.senderId);
-      toast({
-        title: `New message from ${user?.displayName || user?.username || 'User'}`,
-        description: message.content?.substring(0, 50) || 'New message',
-      });
-    }
   };
 
   const handleUserStatus = (data: any) => {

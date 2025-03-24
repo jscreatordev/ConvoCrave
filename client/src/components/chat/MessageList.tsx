@@ -22,10 +22,7 @@ const MessageList: React.FC = () => {
   const currentMessages = currentChannelId 
     ? (channelMessages[currentChannelId] || [])
     : currentDirectUserId 
-      ? (directMessages[currentDirectUserId] || []).filter(
-          // In DMs, don't show messages from the current user
-          m => currentDirectUserId && m.receiverId === currentUser?.id
-        )
+      ? (directMessages[currentDirectUserId] || [])
       : [];
 
   const currentName = currentChannelId 
