@@ -5,9 +5,7 @@ import { apiRequest } from '@/lib/queryClient';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [isRegistering, setIsRegistering] = useState(false);
+  const [avatar, setAvatar] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
@@ -24,13 +22,8 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username.trim() || !password.trim()) {
-      setError('Username and password are required');
-      return;
-    }
-    
-    if (isRegistering && !displayName.trim()) {
-      setError('Display name is required for registration');
+    if (!username.trim()) {
+      setError('Username is required');
       return;
     }
     
@@ -38,13 +31,7 @@ const Login: React.FC = () => {
     setError('');
     
     try {
-      const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
-      const data = isRegistering 
-        ? { username, password, displayName } 
-        : { username, password };
-      
-      const response = await apiRequest('POST', endpoint, data);
-      const userData = await response.json();
+      login(username, avatar);
       
       // Login with socket
       login(userData.id);
