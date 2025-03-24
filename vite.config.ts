@@ -30,12 +30,7 @@ export default defineConfig({
   },
   root: path.resolve(__dirname, "client"),
   build: {
-    outDir: path.resolve(__dirname, "server/public"), // Change from "dist/public" to "server/public"
+    outDir: path.resolve(__dirname, "dist"), // Set output directory to "dist"
     emptyOutDir: true,
-  },
-  server: {
-    proxy: {
-      "/api": "http://localhost:5000", // Ensure API calls are routed correctly
-    },
   },
 });
